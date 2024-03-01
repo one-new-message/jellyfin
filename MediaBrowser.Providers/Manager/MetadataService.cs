@@ -129,6 +129,26 @@ namespace MediaBrowser.Providers.Manager
             bool hasRefreshedImages = true;
             var isFirstRefresh = item.DateLastRefreshed == default;
 
+            // Next fix grouped versions if they have been removed
+            if (item is Video video && video.LinkedAlternateVersions.Length > 0)
+            {
+                foreach (var alternateVersion in video.LinkedAlternateVersions)
+                {
+                    if (LibraryManager.GetItemById(alternateVersion.Id) == null)
+                    {
+                        video.LinkedAlternateVersions = (LinkedChild[])video.LinkedAlternateVersions.Except([alternateVersion]);
+                    }
+                }
+
+                foreach (var alternateVersionPath in video.LocalAlternateVersions)
+                {
+                    if (LibraryManager.FindByPath(alternateVersionPath, false) == null)
+                    {
+                        video.LocalAlternateVersions = (string[])video.LocalAlternateVersions.Except([alternateVersionPath]);
+                    }
+                }
+            }
+
             // Next run metadata providers
             if (refreshOptions.MetadataRefreshMode != MetadataRefreshMode.None)
             {
